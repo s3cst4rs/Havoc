@@ -24,7 +24,7 @@ type Client struct {
 	Username      string
 	GlobalIP      string
 	ClientVersion string
-	Connection    *websocket.Conn
+	Connection    *websocket.Conn // websocket
 	Packager      *packager.Packager
 	Authenticated bool
 	SessionID     string
@@ -70,9 +70,9 @@ type Endpoint struct {
 }
 
 type Teamserver struct {
-	Flags      TeamserverFlags
-	Profile    *profile.Profile
-	Clients    map[string]*Client
+	Flags      TeamserverFlags    // server参数，从命令行获取到的
+	Profile    *profile.Profile   // Profile结构
+	Clients    map[string]*Client // 所有的Client对象，通过id来寻找Client对象
 	Users      []Users
 	EventsList []packager.Package
 	Service    *service.Service

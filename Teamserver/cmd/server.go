@@ -31,7 +31,7 @@ func init() {
 	ServerCli.Flags().BoolVarP(&flags.Server.Debug, "debug", "", false, "enable debug mode")
 	ServerCli.Flags().BoolVarP(&flags.Server.DebugDev, "debug-dev", "", false, "enable debug mode for developers (compiles the agent with the debug mode/macro enabled)")
 	ServerCli.Flags().BoolVarP(&flags.Server.Default, "default", "d", false, "uses default profile (overwrites --profile)")
-	ServerCli.Flags().BoolVarP(&flags.Server.Verbose, "verbose", "v", false, "verbose messages")
+	ServerCli.Flags().BoolVarP(&flags.Server.Verbose, "verbose", "v", false, "verbose messages") // 作用于日志的
 }
 
 func serverFunc(cmd *cobra.Command, args []string) error {
@@ -50,11 +50,13 @@ func serverFunc(cmd *cobra.Command, args []string) error {
 		os.Exit(0)
 	}
 
+	// 初始化Teamserver结构体，并从命令行参数赋值
 	Server = teamserver.NewTeamserver()
 	Server.SetServerFlags(flags)
 
 	logr.LogrInstance = logr.NewLogr(DirPath, LogrPath)
 	logr.LogrInstance.LogrSendText = func(text string) {
+		// 日志记录
 		var pk = events.Teamserver.Logger(text)
 
 		Server.EventAppend(pk)
@@ -74,6 +76,7 @@ func serverFunc(cmd *cobra.Command, args []string) error {
 
 	logger.Info(fmt.Sprintf("Havoc Framework [Version: %v] [CodeName: %v]", VersionNumber, VersionName))
 
+	// 决定使用哪个Profile
 	if flags.Server.Default {
 		Server.SetProfile(DirPath + "/data/havoc.yaotl")
 	} else if flags.Server.Profile != "" {

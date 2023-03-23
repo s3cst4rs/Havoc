@@ -14,6 +14,8 @@ func NewProfile() *Profile {
 	return new(Profile)
 }
 
+// 解析文件并赋值给p.Config
+// def参数只是决定打印什么日志的
 func (p *Profile) SetProfile(path string, def bool) error {
 	err := yaotl.DecodeFile(path, nil, &p.Config)
 	if err != nil {

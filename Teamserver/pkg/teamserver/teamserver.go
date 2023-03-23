@@ -57,6 +57,7 @@ func (t *Teamserver) Start() {
 		return
 	}
 
+	// 命令行中没有指定的话，就从Profile结构体当中取
 	if t.Flags.Server.Host == "" {
 		t.Flags.Server.Host = t.Profile.ServerHost()
 	}
@@ -585,6 +586,8 @@ func (t *Teamserver) ClientAuthenticate(pk packager.Package) bool {
 	return false
 }
 
+// 广播发送消息，可以排除一个Client
+// 改一改哇，只能排除一个有啥意义
 func (t *Teamserver) EventBroadcast(ExceptClient string, pk packager.Package) {
 	for ClientID := range t.Clients {
 		if ExceptClient != ClientID {
@@ -628,6 +631,7 @@ func (t *Teamserver) EventListenerError(ListenerName string, Error error) {
 	}
 }
 
+// 发送消息，通过id获取到对应的Client对象，然后通过websocket发送二进制消息
 func (t *Teamserver) SendEvent(id string, pk packager.Package) error {
 	var (
 		buffer bytes.Buffer
@@ -706,9 +710,11 @@ func (t *Teamserver) SendAllPackagesToNewClient(ClientID string) {
 	}
 }
 
+// 设置编译所调用的编译器
 func (t *Teamserver) FindSystemPackages() bool {
 	var err error
 
+	// 是否指定了自定义的编译器，x64、x86、asm
 	if t.Profile.Config.Server.Build != nil {
 
 		if len(t.Profile.Config.Server.Build.Compiler64) > 0 {

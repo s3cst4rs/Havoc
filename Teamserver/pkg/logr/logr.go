@@ -8,16 +8,18 @@ import (
 
 type Logr struct {
 	// Path to directory where everything is going to be logged (user chat, input/output from agent)
-	Path         string
-	ListenerPath string
-	AgentPath    string
-	ServerPath   string
+	Path         string // 日志路径
+	ListenerPath string // Listener日志路径
+	AgentPath    string // Agent日志路径
+	ServerPath   string // 当前路径
 
 	LogrSendText func(text string)
 }
 
 var LogrInstance *Logr
 
+// 创建所有日志相关的路径
+// Server 当前路径 Path 日志路径
 func NewLogr(Server, Path string) *Logr {
 	var (
 		logr = new(Logr)
@@ -29,6 +31,7 @@ func NewLogr(Server, Path string) *Logr {
 	logr.ListenerPath = Path + "/listener"
 	logr.AgentPath = Path + "/agents"
 
+	// 新建日志路径
 	if _, err = os.Stat(Path); os.IsNotExist(err) {
 		if err = os.MkdirAll(Path, os.ModePerm); err != nil {
 			logger.Error("Failed to create Logr folder: " + err.Error())

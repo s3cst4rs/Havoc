@@ -19,6 +19,7 @@ type WebHookConfig struct {
 	Discord *WebHookDiscordConfig `yaotl:"Discord,block"`
 }
 
+// 编译器路径信息
 type BuildConfig struct {
 	Compiler64 string `yaotl:"Compiler64,optional"`
 	Compiler86 string `yaotl:"Compiler86,optional"`
@@ -30,6 +31,7 @@ type ServiceConfig struct {
 	Password string `yaotl:"Password"`
 }
 
+// Server信息
 type ServerProfile struct {
 	Host  string       `yaotl:"Host"`
 	Port  int          `yaotl:"Port"`

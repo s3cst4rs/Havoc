@@ -18,6 +18,7 @@ func strip(str []byte) []byte {
 	return []byte(re.ReplaceAllString(string(str), ""))
 }
 
+// 将日志写入文件并打印，同时会广播到所有的Client
 func (l Logr) ServerStdOutInit() {
 	var (
 		PathStdOut = l.Path + "/teamserver.log"
@@ -45,15 +46,19 @@ func (l Logr) ServerStdOutInit() {
 					line          = []byte(string(rawLine) + "\n")
 				)
 
+				// LogrSendText是日志发送函数
 				if l.LogrSendText != nil {
+					// 日志广播
 					l.LogrSendText(string(strip(rawLine)))
 				}
 
+				// 写入日志文件
 				_, err := File.Write(strip(line))
 				if err != nil {
 					return
 				}
 
+				// 打印到标准输出
 				_, err = OldStdout.Write(line)
 				if err != nil {
 					return
