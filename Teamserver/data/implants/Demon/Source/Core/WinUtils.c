@@ -6,6 +6,7 @@
 #include <Common/Macros.h>
 #include <Common/Defines.h>
 
+// 进行Hash运算，可以决定是否将字符串转换为大写
 UINT_PTR HashEx( LPVOID String, UINT_PTR Length, BOOL Upper )
 {
     if ( ! String )
@@ -42,6 +43,7 @@ UINT_PTR HashEx( LPVOID String, UINT_PTR Length, BOOL Upper )
     return Hash;
 }
 
+// 通过Hash值获取函数地址，从PEB中进行比对
 PVOID LdrModulePeb( DWORD Hash )
 {
     PLDR_DATA_TABLE_ENTRY Ldr = NULL;
@@ -66,6 +68,7 @@ PVOID LdrModulePeb( DWORD Hash )
     return NULL;
 }
 
+// 加载DLL Instance.Win32.LdrLoadDll
 PVOID LdrModuleLoad( LPSTR ModuleName )
 {
     UNICODE_STRING UnicodeString  = { 0 };
@@ -91,6 +94,7 @@ PVOID LdrModuleLoad( LPSTR ModuleName )
         return NULL;
 }
 
+// 解析导出表，并通过Hash来获取函数地址
 PVOID LdrFunctionAddr( HMODULE Module, DWORD FunctionHash )
 {
     PIMAGE_NT_HEADERS       NtHeader         = NULL;

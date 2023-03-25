@@ -353,6 +353,7 @@ VOID DemonInit( VOID )
     }
 
     // Check if it's min win xp. no one uses win 95 and below (from Meterpreter)
+    // 进行Windows版本判断
     Instance.Win32.RtlGetVersion( &OSVersionExW );
     if ( OSVersionExW.dwMajorVersion >= 5 )
     {
