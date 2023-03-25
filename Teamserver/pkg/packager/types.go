@@ -26,7 +26,7 @@ type (
 
 	Types struct {
 		InitConnection struct {
-			Type int
+			Type int // 请求类型
 
 			OAuthRequest int
 			Success      int

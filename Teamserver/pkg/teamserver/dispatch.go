@@ -20,11 +20,11 @@ import (
 
 func (t *Teamserver) DispatchEvent(pk packager.Package) {
 	switch pk.Head.Event {
-
+	// Implant相关处理
 	case packager.Type.Session.Type:
 
 		switch pk.Body.SubEvent {
-
+		// 存活相关处理
 		case packager.Type.Session.MarkAsDead:
 			if AgentID, ok := pk.Body.Info["AgentID"]; ok {
 				for i := range t.Agents.Agents {
@@ -60,9 +60,11 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 				return
 			}
 
+			// 为指定DemonID进行处理
 			for i := range t.Agents.Agents {
 				if t.Agents.Agents[i].NameID == DemonID {
-
+					// 有Demon和ExternalC2两种不同的处理逻辑
+					// Demon
 					if t.Agents.Agents[i].Info.MagicValue == agent.DEMON_MAGIC_VALUE {
 						logger.Debug("Is Demon")
 
@@ -78,7 +80,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 						}
 
 						if val, ok := pk.Body.Info["CommandID"]; ok {
-
+							// CommandID有Python Plugin、Teamserver、Demon三种类型
 							if pk.Body.Info["CommandID"] == "Python Plugin" {
 
 								logr.LogrInstance.AddAgentInput("Demon", pk.Body.Info["DemonID"].(string), pk.Head.User, pk.Body.Info["TaskID"].(string), pk.Body.Info["CommandLine"].(string), time.Now().UTC().Format("02/01/2006 15:04:05"))
@@ -157,7 +159,8 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 
 								return
 							} else {
-
+								// Demon的处理逻辑
+								// command是任务ID
 								command, err = strconv.Atoi(val.(string))
 								if err != nil {
 
@@ -167,7 +170,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 								} else {
 
 									*Message = make(map[string]string)
-
+									// 构造任务结构体
 									job, err = t.Agents.Agents[i].TaskPrepare(command, pk.Body.Info, Message)
 									if err != nil {
 										var Output = map[string]string{
@@ -179,7 +182,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 
 										return
 									}
-
+									//SMB协议的任务处理，有父节点与无父节点两种处理流程
 									if t.Agents.Agents[i].Pivots.Parent != nil {
 
 										logger.Debug("Prepare command for pivot demon: " + t.Agents.Agents[i].NameID)
@@ -234,6 +237,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 							}
 						}
 					} else {
+						// ExternalC2
 						for _, a := range t.Service.Agents {
 							if a.MagicValue == fmt.Sprintf("0x%x", t.Agents.Agents[i].Info.MagicValue) {
 
@@ -313,7 +317,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 			t.EventAppend(pk)
 			t.EventBroadcast(pk.Head.User, pk)
 		}
-
+	// Client之间的通信，消息、Session、Listener
 	case packager.Type.Chat.Type:
 
 		switch pk.Body.SubEvent {
@@ -331,10 +335,10 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 			break
 
 		}
-
+	// Listener相关处理
 	case packager.Type.Listener.Type:
 		switch pk.Body.SubEvent {
-
+		// 解析配置并t.ListenerStart
 		case packager.Type.Listener.Add:
 
 			var Protocol = pk.Body.Info["Protocol"].(string)
@@ -551,7 +555,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 			}
 
 			break
-
+		// 修改当前的配置信息，并将信息广播给所有的客户端
 		case packager.Type.Listener.Edit:
 
 			var Protocol = pk.Body.Info["Protocol"].(string)
@@ -690,7 +694,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 
 			break
 		}
-
+	// 生成Implant
 	case packager.Type.Gate.Type:
 
 		switch pk.Body.SubEvent {
@@ -704,13 +708,13 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 				SendConsoleMsg func(MsgType, Message string)
 				ClientID       string
 			)
-
+			// 获取生成Implant的客户端ID
 			for _, client := range t.Clients {
 				if client.Username == pk.Head.User {
 					ClientID = client.ClientID
 				}
 			}
-
+			// 向生成Implant的客户端发送消息
 			SendConsoleMsg = func(MsgType, Message string) {
 				err := t.SendEvent(ClientID, events.Gate.SendConsoleMessage(MsgType, Message))
 				if err != nil {
@@ -728,7 +732,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 						logger.Error("Failed to Unmarshal json to object: " + err.Error())
 						return
 					}
-
+					// 设置Builder的配置
 					var PayloadBuilder = builder.NewBuilder(builder.BuilderConfig{
 						Compiler64: t.Settings.Compiler64,
 						Compiler86: t.Settings.Compiler32,
@@ -778,13 +782,13 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 						logger.Error("Unknown Format: " + Format)
 						return
 					}
-
+					// 设置Listener
 					for i := 0; i < len(t.Listeners); i++ {
 						if t.Listeners[i].Name == ListenerName {
 							PayloadBuilder.SetListener(t.Listeners[i].Type, t.Listeners[i].Config)
 						}
 					}
-
+					//设置输出路径，文件名是随机的
 					PayloadBuilder.SetOutputPath("/tmp/" + utils.GenerateID(10) + Ext)
 
 					if t.Profile.Config.Demon != nil {
@@ -806,6 +810,7 @@ func (t *Teamserver) DispatchEvent(pk packager.Package) {
 				}()
 			} else {
 				// send to Services
+				// 为ExternalC2生成Implant配置信息所用的Json结构体
 				for _, Agent := range t.Service.Agents {
 					if Agent.Name == AgentType {
 						var ConfigMap = make(map[string]any)

@@ -24,8 +24,8 @@ type Client struct {
 	Username      string
 	GlobalIP      string
 	ClientVersion string
-	Connection    *websocket.Conn // websocket
-	Packager      *packager.Packager
+	Connection    *websocket.Conn    // websocket
+	Packager      *packager.Packager // 用于json反序列化的对象
 	Authenticated bool
 	SessionID     string
 	Mutex         sync.Mutex
@@ -75,13 +75,13 @@ type Teamserver struct {
 	Clients    map[string]*Client // 所有的Client对象，通过id来寻找Client对象
 	Users      []Users
 	EventsList []packager.Package
-	Service    *service.Service
-	WebHooks   *webhook.WebHook
+	Service    *service.Service // 扩展Service，用于Custom Agents, ExternalC2s etc
+	WebHooks   *webhook.WebHook // WebHook
 	DB         *db.DB
 
 	Server struct {
 		Path   string
-		Engine *gin.Engine
+		Engine *gin.Engine // gin框架
 	}
 
 	Agents    agent.Agents

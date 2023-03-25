@@ -26,6 +26,7 @@ type BuildConfig struct {
 	Nasm       string `yaotl:"Nasm,optional"`
 }
 
+// ExternalC2的配置信息
 type ServiceConfig struct {
 	Endpoint string `yaotl:"Endpoint"`
 	Password string `yaotl:"Password"`

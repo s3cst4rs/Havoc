@@ -144,6 +144,8 @@ func (b *Builder) SetSilent(silent bool) {
 	b.silent = silent
 }
 
+// 设置编译环境，包括编译器路径、编译器参数等
+// 这里会生成Implant的Profile配置信息Config，并加入到CONFIG_BYTES参数当中
 func (b *Builder) Build() bool {
 	var (
 		CompileCommand string
@@ -180,6 +182,7 @@ func (b *Builder) Build() bool {
 	array += "}"
 	logger.Debug("array = " + array)
 
+	// 将Profile信息加入到CONFIG_BYTES参数当中
 	b.compilerOptions.Defines = append(b.compilerOptions.Defines, "CONFIG_BYTES="+array)
 
 	// enable debug mode
@@ -399,6 +402,7 @@ func (b *Builder) Patch(ByteArray []byte) []byte {
 	return ByteArray
 }
 
+// 为Implant生成Profile配置信息
 func (b *Builder) PatchConfig() []byte {
 	var (
 		DemonConfig        = packer.NewPacker(nil, nil)

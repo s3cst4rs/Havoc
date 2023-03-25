@@ -25,6 +25,7 @@ import (
 	"github.com/fatih/structs"
 )
 
+// 处理并加密Job，根据Job的Data来决定处理方案
 func BuildPayloadMessage(Jobs []Job, AesKey []byte, AesIv []byte) []byte {
 	var (
 		DataPayload        []byte
@@ -535,6 +536,8 @@ func (a *Agent) BackgroundUpdateLastCallbackUI(teamserver TeamServer) {
 	}
 }
 
+// SMB协议添加任务
+// 先打包任务，如果有父节点的话，再将任务打包成父节点的任务
 func (a *Agent) PivotAddJob(job Job) {
 	var (
 		Payload  = BuildPayloadMessage([]Job{job}, a.Encryption.AESKey, a.Encryption.AESIv)
@@ -552,6 +555,7 @@ func (a *Agent) PivotAddJob(job Job) {
 		return
 	}
 
+	// AgentID决定了由谁来执行这个任务
 	Packer.AddInt32(int32(AgentID))
 	Packer.AddBytes(Payload)
 
@@ -567,6 +571,7 @@ func (a *Agent) PivotAddJob(job Job) {
 	pivots = &a.Pivots
 
 	// pack it up for all the parent pivots.
+	// 将任务再次包装，由上一级的pivot来执行
 	for {
 		if pivots.Parent.Pivots.Parent == nil {
 			break

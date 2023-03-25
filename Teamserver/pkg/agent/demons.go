@@ -25,6 +25,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// Teamserver 查看和清除当前任务列表
 func (a *Agent) TeamserverTaskPrepare(Command string, Console func(AgentID string, Message map[string]string)) error {
 
 	var Commands = strings.Split(Command, "::")
@@ -89,6 +90,7 @@ func (a *Agent) TeamserverTaskPrepare(Command string, Console func(AgentID strin
 	return nil
 }
 
+// 构建Implant任务结构体
 func (a *Agent) TaskPrepare(Command int, Info any, Message *map[string]string) (*Job, error) {
 	var (
 		job = &Job{

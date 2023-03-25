@@ -74,8 +74,10 @@ func (t *Teamserver) Start() {
 	})
 
 	// Catch me if you can
+	// 提供给Client做通信处理，这里是WebSocket协议
 	t.Server.Engine.GET("/havoc/", func(context *gin.Context) {
 		upgrade := websocket.Upgrader{}
+		// http协议转WebSocket协议
 		WebSocket, err := upgrade.Upgrade(context.Writer, context.Request, nil)
 		if err != nil {
 			logger.Error("Failed upgrading request")
@@ -104,9 +106,11 @@ func (t *Teamserver) Start() {
 	// TODO: pass this as a profile/command line flag
 	t.Server.Engine.Static("/home", "./bin/static")
 
+	// ExternalC2的处理
 	t.Server.Engine.POST("/:endpoint", func(context *gin.Context) {
-		var endpoint = context.Request.RequestURI[1:]
+		var endpoint = context.Request.RequestURI[1:] // 获取根目录后面的内容，http://example.com/foo?bar=baz#qux，这里就是foo?bar=baz#qux
 
+		// 如果有这个endpoint，就执行对应的函数，这里的函数是在handlers包中定义的
 		if len(t.Endpoints) > 0 {
 			for i := range t.Endpoints {
 				if t.Endpoints[i].Endpoint == endpoint {
@@ -116,7 +120,9 @@ func (t *Teamserver) Start() {
 		}
 	})
 
+	// 启动Teamserver
 	go func(Server string) {
+		// Server是host:port
 		err := t.Server.Engine.Run(Server)
 		if err != nil {
 			logger.Error("Failed to start websocket: " + err.Error())
@@ -126,9 +132,9 @@ func (t *Teamserver) Start() {
 	}(t.Flags.Server.Host + ":" + t.Flags.Server.Port)
 
 	t.WebHooks = webhook.NewWebHook()
-	t.Service = service.NewService(t.Server.Engine)
-	t.Service.Events = t
-	t.Service.TeamAgents = &t.Agents
+	t.Service = service.NewService(t.Server.Engine) // 与扩展的Service与主Engine共用
+	t.Service.Events = t                            // 目前只有Teamserver实现了events.EventInterface接口，猜测可能是为了后续扩展
+	t.Service.TeamAgents = &t.Agents                // 目前只有TeamAgentsInterface实现了，Agent猜测是用于任务相关的
 	t.Clients = make(map[string]*Client)
 	t.Listeners = []*Listener{}
 	TeamserverWs = "ws://" + t.Flags.Server.Host + ":" + t.Flags.Server.Port
@@ -138,7 +144,7 @@ func (t *Teamserver) Start() {
 
 	/* if we specified a webhook then lets use it. */
 	if t.Profile.Config.WebHook != nil {
-
+		// 目前只实现了Discord的WebHook
 		if t.Profile.Config.WebHook.Discord != nil {
 
 			var (
@@ -154,6 +160,7 @@ func (t *Teamserver) Start() {
 				UserName = t.Profile.Config.WebHook.Discord.UserName
 			}
 
+			// 设置到Teamserver的WebHook中
 			if len(t.Profile.Config.WebHook.Discord.WebHook) > 0 {
 				t.WebHooks.SetDiscord(AvatarUrl, UserName, t.Profile.Config.WebHook.Discord.WebHook)
 			}
@@ -163,6 +170,7 @@ func (t *Teamserver) Start() {
 	}
 
 	// start teamserver service
+	// 启动ExternalC2
 	if t.Profile.Config.Service != nil {
 		t.Service.Config = *t.Profile.Config.Service
 
@@ -187,9 +195,11 @@ func (t *Teamserver) Start() {
 		logger.Info("Creates new database: " + colors.Blue("data/havoc.db"))
 	}
 
+	// 获取数据库中的Listener数量
 	ListenerCount = t.DB.ListenerCount()
 
 	/* start listeners from the specified yaotl profile */
+	// 从Profile中取出Listener
 	if t.Profile.Config.Listener != nil {
 
 		/* Start all HTTP/s listeners */
@@ -264,6 +274,8 @@ func (t *Teamserver) Start() {
 
 	}
 
+	// t.Listeners的值在上面的t.ListenerStart中添加
+	// 输出上次启动过的Listener数量，根据数据库与当前启动的Listener的名字做对比得出
 	if ListenerCount > 0 {
 
 		var TotalCount = 0
@@ -299,6 +311,7 @@ func (t *Teamserver) Start() {
 		case handlers.AGENT_HTTP, handlers.AGENT_HTTPS:
 
 			var (
+				// Config的信息是map表存储的，后续所有的取值都需要通过断言来完成
 				Data        = make(map[string]any)
 				HandlerData = handlers.HTTPConfig{
 					Name: listener["Name"],
@@ -342,6 +355,7 @@ func (t *Teamserver) Start() {
 			}
 
 			/* also ignore if we already have a listener running */
+			// 是否存在一种情况，端口被占用了，而不是listener已经存在了。。。
 			if err := t.ListenerStart(handlers.LISTENER_HTTP, HandlerData); err != nil && err.Error() != "listener already exists" {
 				logger.SetStdOut(os.Stderr)
 				logger.Error("Failed to start listener from db: " + err.Error())
@@ -409,6 +423,7 @@ func (t *Teamserver) Start() {
 	// This should hold the Teamserver as long as the WebSocket Server is running
 	logger.Debug("Wait til the server shutdown")
 
+	// 如果Teamserver的WebSocket Server关闭了，那么就会退出
 	<-ServerFinished
 }
 
@@ -416,8 +431,10 @@ func (t *Teamserver) handleRequest(id string) {
 	_, NewClient, err := t.Clients[id].Connection.ReadMessage()
 
 	if err != nil {
+		// 如果已经结束，直接return
 		if err != io.EOF {
 			logger.Error("Error reading 2:", err.Error())
+			// 如果是connection reset by peer，那么就关闭连接
 			if strings.Contains(err.Error(), "connection reset by peer") {
 				err := t.Clients[id].Connection.Close()
 				if err != nil {
@@ -428,15 +445,19 @@ func (t *Teamserver) handleRequest(id string) {
 		return
 	}
 
+	// CreatePackage是用来Json反序列化的
 	pk := t.Clients[id].Packager.CreatePackage(string(NewClient))
 
+	// 判断连接的用户是否存在于Profile中，如果不存在，那么就发送UserDoNotExists事件，然后关闭连接
 	if t.Profile != nil {
 		var found = false
+		// 遍历所有的用户名，如果有一个匹配的，那么就设置found为true
 		for _, UserNames := range t.Profile.ListOfUsernames() {
 			if UserNames == pk.Head.User {
 				found = true
 			}
 		}
+		// 如果没有找到，那么就发送UserDoNotExists事件，用户不存在
 		if !found {
 			err := t.SendEvent(id, events.UserDoNotExists())
 			if err != nil {
@@ -447,6 +468,7 @@ func (t *Teamserver) handleRequest(id string) {
 		}
 	}
 
+	// 如果用户已经存在，那么就发送UserAlreadyExits事件，然后关闭连接，因为一个用户只能连接一次
 	for i := range t.Clients {
 		if t.Clients[i].Username == pk.Head.User {
 			err := t.SendEvent(id, events.UserAlreadyExits())
@@ -458,6 +480,7 @@ func (t *Teamserver) handleRequest(id string) {
 	}
 
 	if !t.ClientAuthenticate(pk) {
+		// 如果用户没有认证成功，那么就发送Authenticated事件，然后关闭连接
 		if t.Clients[id] == nil {
 			return
 		}
@@ -478,6 +501,7 @@ func (t *Teamserver) handleRequest(id string) {
 
 		logger.Good("User <" + colors.Blue(pk.Body.Info["User"].(string)) + "> " + colors.Green("Authenticated"))
 
+		// 如果认证成功，会将id作为Client的ClientID，But感觉没有意义，id既是key，又是value
 		t.Clients[id].Authenticated = true
 		t.Clients[id].ClientID = id
 
@@ -489,11 +513,14 @@ func (t *Teamserver) handleRequest(id string) {
 
 	t.Clients[id].Username = pk.Body.Info["User"].(string)
 	packageNewUser := events.ChatLog.NewUserConnected(t.Clients[id].Username)
+	// t.EventAppend将事件添加到EventQueue中，然后在EventBroadcast中会将事件发送给所有的用户，再将t.EventAppend中的事件发送给新用户
 	t.EventAppend(packageNewUser)
+	// 向除了自己以外的所有用户发送NewUserConnected事件
 	t.EventBroadcast(id, packageNewUser)
 
 	t.SendAllPackagesToNewClient(id)
 
+	// Client连接后，会一直循环，直到Client断开连接，通过t.DispatchEvent来处理事件
 	for {
 		_, EventPackage, err := t.Clients[id].Connection.ReadMessage()
 
@@ -548,6 +575,8 @@ func (t *Teamserver) ClientAuthenticate(pk packager.Package) bool {
 						UserPassword string
 						UserName     string
 					)
+					// 遍历所有的用户，如果有一个用户的用户名和密码匹配，那么就返回true
+					// 会根据User.Hashed来决定是否需要对密码进行哈希运算
 					for _, User := range t.Profile.Config.Operators.Users {
 						if User.Name == pk.Head.User {
 							logger.Debug("Found User: " + User.Name)
@@ -587,7 +616,6 @@ func (t *Teamserver) ClientAuthenticate(pk packager.Package) bool {
 }
 
 // 广播发送消息，可以排除一个Client
-// 改一改哇，只能排除一个有啥意义
 func (t *Teamserver) EventBroadcast(ExceptClient string, pk packager.Package) {
 	for ClientID := range t.Clients {
 		if ExceptClient != ClientID {
@@ -662,6 +690,7 @@ func (t *Teamserver) SendEvent(id string, pk packager.Package) error {
 	return nil
 }
 
+// 通过id获取到对应的Client对象，广播UserDisconnected消息，将用户状态设置为离线，然后删除该Client
 func (t *Teamserver) RemoveClient(ClientID string) {
 	if _, ok := t.Clients[ClientID]; ok {
 		var (
@@ -700,6 +729,7 @@ func (t *Teamserver) EventRemove(EventID int) []packager.Package {
 	return append(t.EventsList[:EventID], t.EventsList[EventID+1:]...)
 }
 
+// 将t.EventsList中的消息发送给新的Client
 func (t *Teamserver) SendAllPackagesToNewClient(ClientID string) {
 	for _, Package := range t.EventsList {
 		err := t.SendEvent(ClientID, Package)

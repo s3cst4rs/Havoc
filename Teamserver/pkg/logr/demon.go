@@ -12,6 +12,7 @@ import (
 	"Havoc/pkg/logger"
 )
 
+// 为Implant创建一个日志文件夹
 func (l Logr) AddAgentInput(AgentType, AgentID, User, TaskID, Input string, time string) {
 	var (
 		DemonPath    = l.AgentPath + "/" + AgentID

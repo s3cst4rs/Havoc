@@ -20,6 +20,7 @@ func (t *Teamserver) ListenerStart(ListenerType int, info any) error {
 		ListenerName   string
 	)
 
+	// 在启动Teamserver的时候，t.Listeners是空的，所以这里的for循环不会执行
 	for _, listener := range t.Listeners {
 		var Name string
 
@@ -347,6 +348,7 @@ func (t *Teamserver) ListenerStart(ListenerType int, info any) error {
 		break
 	}
 
+	// 将传入的Listerner添加到Teamserver的Listeners中
 	t.Listeners = append(t.Listeners, &Listener{
 		Name:   ListenerName,
 		Type:   ListenerType,

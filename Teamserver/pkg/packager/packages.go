@@ -1,21 +1,22 @@
 package packager
 
 import (
-    "encoding/json"
+	"encoding/json"
 
-    "Havoc/pkg/logger"
+	"Havoc/pkg/logger"
 )
 
 func NewPackager() *Packager {
-    return new(Packager)
+	return new(Packager)
 }
 
+// json反序列化
 func (p Packager) CreatePackage(jsonObject string) Package {
-    var pk Package
+	var pk Package
 
-    if err := json.Unmarshal([]byte(jsonObject), &pk); err != nil {
-        logger.Error("Error while creating Package struct :: " + err.Error())
-    }
+	if err := json.Unmarshal([]byte(jsonObject), &pk); err != nil {
+		logger.Error("Error while creating Package struct :: " + err.Error())
+	}
 
-    return pk
+	return pk
 }
