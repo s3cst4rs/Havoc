@@ -268,6 +268,7 @@ Leave:
 }
 
 /* push anything from the pipe */
+// 从管道中读数据并回传给服务器
 VOID DotnetPushPipe()
 {
     PVOID Package = NULL;

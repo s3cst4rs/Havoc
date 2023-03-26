@@ -74,6 +74,7 @@ VOID JobCheckList()
         {
             case JOB_TYPE_PROCESS:
             {
+                // 校验进程是否还在运行，如果不在运行，则将状态设置为JOB_STATE_DEAD
                 if ( JobList->State == JOB_STATE_RUNNING )
                 {
                     DWORD Return = 0;
@@ -109,6 +110,7 @@ VOID JobCheckList()
 
                     if ( Status != STILL_ACTIVE )
                     {
+                        // 从匿名管道中读取数据并回传
                         PUTS( "Tracking process is dead." )
                         JobList->State = JOB_STATE_DEAD;
                         AnonPipesRead( ( ( PANONPIPE ) JobList->Data ) );
@@ -118,6 +120,7 @@ VOID JobCheckList()
                     }
                     else
                     {
+                        // 如果进程还在运行，那么就连接匿名管道并读取数据、回传
                         // just read what there is available.
                         DWORD Available = 0;
                         PVOID Buffer    = NULL;

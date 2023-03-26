@@ -4,6 +4,7 @@
 #include <Core/MiniStd.h>
 #include <Crypt/AesCrypt.h>
 
+// 构造Parser结构体，用于后续解析数据
 VOID ParserNew( PPARSER parser, PCHAR Buffer, UINT32 size )
 {
     if ( parser == NULL )
@@ -50,6 +51,7 @@ INT ParserGetInt32( PPARSER parser )
         return ( INT ) __builtin_bswap32( intBytes );
 }
 
+// 从parser中获取数据，并返回数据和长度
 PCHAR ParserGetBytes( PPARSER parser, PINT size )
 {
     UINT32  Length  = 0;

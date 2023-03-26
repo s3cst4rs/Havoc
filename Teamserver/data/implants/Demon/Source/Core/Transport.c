@@ -10,6 +10,7 @@
 
 #include <Crypt/AesCrypt.h>
 
+// 发送上线信息，返回AgentID，与当前一致，说明连接成功
 BOOL TransportInit( )
 {
     PUTS( "Connecting to listener" )

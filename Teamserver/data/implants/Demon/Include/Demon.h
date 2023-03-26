@@ -127,6 +127,7 @@ typedef struct
         } Memory;
 
         // Process Config
+        // 被Spawn进程的全路径
         struct
         {
             PCHAR   Spawn64;

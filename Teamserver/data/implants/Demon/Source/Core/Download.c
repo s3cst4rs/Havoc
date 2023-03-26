@@ -133,6 +133,7 @@ VOID DownloadPush()
             Download->ReadSize += Read;
 
             /* Send chunk we read */
+            // 已读数据大于0，创建结构并回传
             if ( Read > 0 )
             {
                 PUTS( "Send download chunk" )
@@ -153,6 +154,8 @@ VOID DownloadPush()
             }
 
             /* if this was the last chunk we read send a finish download close request */
+            // 已读数据大于0，且文件大小为0，创建结构并回传
+            // 说明剩余数据已经读完
             if ( ( Read > 0 ) && ( ! Download->Size ) )
             {
                 Package = PackageCreate( DEMON_COMMAND_FS );
@@ -170,6 +173,7 @@ VOID DownloadPush()
             }
 
             /* if either what we read or the download size is 0 we are finished. */
+            // 没有读出数据或者文件大小为0，设置状态为DOWNLOAD_STATE_REMOVE
             if ( ( ! Read ) || ( ! Download->Size ) )
             {
                 PRINTF( "Read:[%d] Download->Size:[%d]. Set Download (%x) State to DOWNLOAD_STATE_REMOVE\n", Read, Download->Size, Download->FileID )
@@ -189,6 +193,7 @@ VOID DownloadPush()
 
     /* why do we do that again ?
      * seems like I can't remove the download item from a linked list while iterating over it. was easier to do this. */
+    // 遍历下载列表，将状态为DOWNLOAD_STATE_REMOVE的下载项删除
     for ( ;; )
     {
         if ( ! Download )

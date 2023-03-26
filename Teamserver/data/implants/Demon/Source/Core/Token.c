@@ -364,6 +364,7 @@ VOID TokenClear()
     Instance.Tokens.Token       = NULL;
 }
 
+// 传入False是恢复，传入True是模拟
 VOID TokenImpersonate( BOOL Impersonate )
 {
     if ( Impersonate && Instance.Tokens.Token )

@@ -60,6 +60,7 @@ BOOL HttpSend( PBUFFER Send, PBUFFER Response )
         goto LEAVE;
     }
 
+    // 计算URI数量
     Counter = 0;
     while ( TRUE )
     {
@@ -67,6 +68,7 @@ BOOL HttpSend( PBUFFER Send, PBUFFER Response )
         else Counter++;
     }
 
+    // 随机选择一个URI
     HttpEndpoint = Instance.Config.Transport.Uris[ RandomNumber32() % Counter ];
     HttpFlags    = WINHTTP_FLAG_BYPASS_PROXY_CACHE;
 
@@ -152,6 +154,7 @@ BOOL HttpSend( PBUFFER Send, PBUFFER Response )
                 goto LEAVE;
             }
 
+            // 是否需要接收响应数据
             if ( Response )
             {
                 RespBuffer = NULL;
@@ -256,6 +259,7 @@ PHOST_DATA HostAdd( LPWSTR Host, SIZE_T Size, DWORD Port )
     return HostData;
 }
 
+// 如果错误次数达到最大值，将Host设置为Dead，如果没有将Failures+1
 PHOST_DATA HostFailure( PHOST_DATA Host )
 {
     if ( ! Host )
@@ -280,6 +284,7 @@ PHOST_DATA HostFailure( PHOST_DATA Host )
 }
 
 /* Gets a random host from linked list. */
+// 获取到随机个数的Host链表
 PHOST_DATA HostRandom()
 {
     PHOST_DATA Host  = NULL;
@@ -318,9 +323,10 @@ PHOST_DATA HostRandom()
 PHOST_DATA HostRotation( SHORT Strategy )
 {
     PHOST_DATA Host = NULL;
-
+    // 选中以后会返回
     if ( Strategy == TRANSPORT_HTTP_ROTATION_ROUND_ROBIN )
     {
+        // 如果有并且不是Dead，就跳出，表示选中了
         DWORD Count = 0;
 
         /* get linked list */
@@ -356,6 +362,7 @@ PHOST_DATA HostRotation( SHORT Strategy )
 
     /* if we specified infinite retries then reset every "Failed" retries in our linked list and do this forever...
      * as the operator wants. */
+    // 如果没有选中并且最大重试次数为0，就重置所有Host的状态，Failures和Dead，并且返回整个Host链表
     if ( ( Instance.Config.Transport.HostMaxRetries == 0 ) && ! Host )
     {
         PUTS( "Specified to keep going. To infinity... and beyond" )
@@ -383,6 +390,7 @@ PHOST_DATA HostRotation( SHORT Strategy )
     return Host;
 }
 
+// 获取Host链表的个数
 DWORD HostCount()
 {
     PHOST_DATA Host  = NULL;
@@ -410,6 +418,7 @@ DWORD HostCount()
     return Count;
 }
 
+// 检查Host链表中是否有Dead的Host，如果全部为Dead，返回FALSE
 BOOL HostCheckup()
 {
     PHOST_DATA Host  = NULL;

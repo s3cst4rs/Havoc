@@ -625,6 +625,7 @@ func (b *Builder) PatchConfig() []byte {
 			}
 		}
 
+		// 是否启用SSL
 		if Config.Config.Secure {
 			DemonConfig.AddInt(win32.TRUE)
 		} else {

