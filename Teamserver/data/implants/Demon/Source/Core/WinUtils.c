@@ -233,6 +233,8 @@ BOOL ProcessIsWow( HANDLE hProcess )
     return ( IsWow64 != 0 );
 }
 
+// 创建进程，会自行创建管道来接收结果，会根据是否需要进程模拟Token，来决定使用CreateProcessA还是CreateProcessWithTokenW
+// 同时也会把进程相关信息，命令行等内容回传，创建成功后会将进程加入到Job的链表当中，包含详细信息
 BOOL ProcessCreate( BOOL EnableWow64, LPSTR App, LPSTR CmdLine, DWORD Flags, PROCESS_INFORMATION* ProcessInfo, BOOL Piped, PANONPIPE DataAnonPipes )
 {
     PPACKAGE        Package         = NULL;

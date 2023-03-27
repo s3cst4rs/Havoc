@@ -485,6 +485,7 @@ BOOL FindVersion( PVOID Assembly, DWORD length )
     return 0;
 }
 
+// 准备CLR环境
 DWORD ClrCreateInstance( LPCWSTR dotNetVersion, PICLRMetaHost *ppClrMetaHost, PICLRRuntimeInfo *ppClrRuntimeInfo, ICorRuntimeHost **ppICorRuntimeHost )
 {
     BOOL fLoadable = FALSE;

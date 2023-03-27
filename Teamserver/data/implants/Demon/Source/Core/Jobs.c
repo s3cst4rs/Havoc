@@ -162,6 +162,7 @@ VOID JobCheckList()
  * @param JobID
  * @return
  */
+ // 暂停指定的JOB，只能暂停线程的
 BOOL JobSuspend( DWORD JobID )
 {
     PJOB_DATA JobList = Instance.Jobs;
@@ -173,7 +174,7 @@ BOOL JobSuspend( DWORD JobID )
             if ( JobList->JobID == JobID )
             {
                 PRINTF( "Found Job ID: %d", JobID )
-
+                // 只能暂停JOB_TYPE_THREAD类型
                 if ( JobList->Type == JOB_TYPE_THREAD )
                 {
                     PUTS( "Suspending Thread" )
@@ -283,6 +284,7 @@ BOOL JobKill( DWORD JobID )
 
             switch ( JobList->Type )
             {
+                // 调用NtTerminateThread结束线程，如果成功，Instance.Threads减一，失败会返回错误信息
                 case JOB_TYPE_THREAD:
                 {
                     if ( JobList->State != JOB_STATE_DEAD )
@@ -316,6 +318,7 @@ BOOL JobKill( DWORD JobID )
                     break;
                 }
 
+                // 进程直接调用TerminateProcess结束
                 case JOB_TYPE_PROCESS:
                 {
                     if ( JobList->State != JOB_STATE_DEAD )
@@ -325,6 +328,7 @@ BOOL JobKill( DWORD JobID )
                     break;
                 }
 
+                // 结束进程，并将当前已有的数据回传
                 case JOB_TYPE_TRACK_PROCESS:
                 {
                     if ( JobList->State != JOB_STATE_DEAD )

@@ -96,6 +96,7 @@ VOID DemonRoutine()
 
 /* Init metadata buffer/package. */
 // 收集机器信息，并构造Demon的MetaData结构体
+// 如果是第一次上线，Header传True，会构造DEMON_INITIALIZE头
 VOID DemonMetaData( PPACKAGE* MetaData, BOOL Header )
 {
     PVOID            Data       = NULL;

