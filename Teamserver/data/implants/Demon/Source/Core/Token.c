@@ -24,6 +24,7 @@
  * token order.
  * */
 
+// 已经选择用NT的函数了，为什么不直接调用NT中的提权函数
 BOOL TokenSetPrivilege( LPSTR Privilege, BOOL Enable )
 {
     TOKEN_PRIVILEGES TokenPrivileges = { 0 };

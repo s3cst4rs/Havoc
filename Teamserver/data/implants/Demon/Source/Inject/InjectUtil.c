@@ -122,6 +122,7 @@ BOOL MemoryProtect( DX_MEMORY MemMethode, HANDLE hProcess, LPVOID Memory, SIZE_T
     return Success;
 }
 
+// 提供了WinAPI、Syscall、APC三种方式
 BOOL ThreadCreate( DX_THREAD CreateThreadMethode, HANDLE hProcess, LPVOID EntryPoint, PINJECTION_CTX ctx )
 {
     PPACKAGE Package  = PackageCreate( DEMON_INFO );

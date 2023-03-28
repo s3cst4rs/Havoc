@@ -42,6 +42,7 @@ BOOL PivotAdd( BUFFER NamedPipe, PVOID* Output, PSIZE_T BytesSize )
         }
     }
 
+    // 连管道，收结果
     do
     {
         // TODO: first get the size then parse
@@ -74,6 +75,7 @@ BOOL PivotAdd( BUFFER NamedPipe, PVOID* Output, PSIZE_T BytesSize )
     } while ( TRUE );
 
     // Adding data to the list
+    // 构造Smb结构体，加入Instance.SmbPivots链表
     {
         PRINTF( "Pivot :: Output[%p] Size[%d]\n", *Output, *BytesSize )
 
